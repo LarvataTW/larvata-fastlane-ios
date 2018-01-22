@@ -44,6 +44,20 @@ platform :ios do
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
   end
 
+  desc "Submit a new Beta Build to fir.im"
+  desc "This will also make sure the profile is up to date"
+  lane :beta_firim do
+    setup_circle_ci
+    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
+    match(type: "appstore")
+    match(type: "adhoc")
+    gym(scheme: ENV['XCODE_SCHEME'],
+      export_method: "ad-hoc",
+      skip_profile_detection: true
+    ) # Build your app - more options available
+    firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
+  end
+
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do

@@ -35,8 +35,8 @@ platform :ios do
   lane :beta_fabric do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore")
-    match(type: "adhoc")
+    match(type: "appstore", clone_branch_directly: true)
+    match(type: "adhoc", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'],
       export_method: "ad-hoc",
       skip_profile_detection: true
@@ -49,8 +49,8 @@ platform :ios do
   lane :beta_firim do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore")
-    match(type: "adhoc")
+    match(type: "appstore", clone_branch_directly: true)
+    match(type: "adhoc", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'],
       export_method: "ad-hoc",
       skip_profile_detection: true
@@ -63,8 +63,8 @@ platform :ios do
   lane :beta_pgyer do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore")
-    match(type: "adhoc")
+    match(type: "appstore", clone_branch_directly: true)
+    match(type: "adhoc", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'],
       export_method: "ad-hoc",
       skip_profile_detection: true
@@ -77,7 +77,7 @@ platform :ios do
   lane :beta_testflight do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore")
+    match(type: "appstore", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
     pilot(skip_waiting_for_build_processing: true)
   end
@@ -85,7 +85,7 @@ platform :ios do
   desc "Deploy a new version to the App Store"
   lane :release do
     setup_circle_ci
-    match(type: "appstore")
+    match(type: "appstore", clone_branch_directly: true)
     # snapshot
     gym(scheme: ENV['XCODE_SCHEME'])# Build your app - more options available
     deliver(force: true,

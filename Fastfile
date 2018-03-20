@@ -149,7 +149,7 @@ platform :ios do
         attachment_properties: {
           fields: [{
             title: "Build Version",
-            value: get_version_number,
+            value: get_version_number(target: ENV['XCODE_SCHEME']),
             short: true
           },{
             title: "Build Number",

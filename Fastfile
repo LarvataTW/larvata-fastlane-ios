@@ -126,10 +126,12 @@ platform :ios do
   lane :refresh_profiles do
     match(
       type: "development",
-      force: true)
+      force: true,
+      clone_branch_directly: true)
     match(
       type: "adhoc",
-      force: true)
+      force: true,
+      clone_branch_directly: true)
   end
 
   # You can define as many lanes as you want

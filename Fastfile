@@ -30,7 +30,8 @@ platform :ios do
     scan
   end
   
-  lane :change_provisioning_profile_specifier do
+  private_lane :archive do
+    match(type: "adhoc", clone_branch_directly: true)
     project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
     project.targets.each do |target|
       # 修改編譯設定
@@ -40,6 +41,13 @@ platform :ios do
       end
     end
     project.save
+    gym(scheme: ENV['XCODE_SCHEME'],
+      export_method: "ad-hoc",
+      skip_profile_detection: true,
+      export_options: {
+        compileBitcode: false
+      }
+    )
   end
 
   desc "Submit a new Beta Build to Fabric"
@@ -47,15 +55,7 @@ platform :ios do
   lane :beta_fabric do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore", clone_branch_directly: true)
-    match(type: "adhoc", clone_branch_directly: true)
-    gym(scheme: ENV['XCODE_SCHEME'],
-      export_method: "ad-hoc",
-      skip_profile_detection: true,
-      export_options: {
-        compileBitcode: false
-      }
-    ) # Build your app - more options available
+    archive
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics()
   end
@@ -65,15 +65,8 @@ platform :ios do
   lane :beta_firim do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore", clone_branch_directly: true)
     match(type: "adhoc", clone_branch_directly: true)
-    gym(scheme: ENV['XCODE_SCHEME'],
-      export_method: "ad-hoc",
-      skip_profile_detection: true,
-      export_options: {
-        compileBitcode: false
-      }
-    ) # Build your app - more options available
+    archive
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     upload_symbols_to_crashlytics()
   end
@@ -83,15 +76,7 @@ platform :ios do
   lane :beta_pgyer do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore", clone_branch_directly: true)
-    match(type: "adhoc", clone_branch_directly: true)
-    gym(scheme: ENV['XCODE_SCHEME'],
-      export_method: "ad-hoc",
-      skip_profile_detection: true,
-      export_options: {
-        compileBitcode: false
-      }
-    ) # Build your app - more options available
+    archive
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     upload_symbols_to_crashlytics()
   end

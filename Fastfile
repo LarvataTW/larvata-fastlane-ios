@@ -29,6 +29,18 @@ platform :ios do
   lane :test do
     scan
   end
+  
+  lane :change_provisioning_profile_specifier do
+    project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
+    project.targets.each do |target|
+      # 修改編譯設定
+      target.build_configurations.each do |config|
+        specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
+        config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
+      end
+    end
+    project.save
+  end
 
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"

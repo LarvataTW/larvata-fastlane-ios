@@ -94,6 +94,7 @@ platform :ios do
   desc "Deploy a new version to the App Store"
   lane :release do
     setup_circle_ci
+    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     match(type: "appstore", clone_branch_directly: true)
     # snapshot
     gym(scheme: ENV['XCODE_SCHEME'])# Build your app - more options available

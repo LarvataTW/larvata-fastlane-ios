@@ -32,15 +32,25 @@ platform :ios do
   
   private_lane :archive do
     match(type: "adhoc", clone_branch_directly: true)
+    
     project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
-    project.targets.each do |target|
-      # 修改編譯設定
-      target.build_configurations.each do |config|
+    # 將 AppStore 替換成 AdHoc
+    project.build_configurations.each do |config|
+      unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
         specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
         config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
       end
     end
+    project.targets.each do |target|
+      target.build_configurations.each do |config|
+        unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
+          specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
+          config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
+        end
+      end
+    end
     project.save
+    
     gym(scheme: ENV['XCODE_SCHEME'],
       export_method: "ad-hoc",
       skip_profile_detection: true,

@@ -75,7 +75,6 @@ platform :ios do
   lane :beta_firim do
     setup_circle_ci
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "adhoc", clone_branch_directly: true)
     archive
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     upload_symbols_to_crashlytics()

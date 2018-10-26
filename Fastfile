@@ -62,8 +62,10 @@ platform :ios do
 
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"
-  lane :beta_fabric do
-    setup_circle_ci
+  lane :beta_fabric do |options|
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     archive
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
@@ -72,8 +74,10 @@ platform :ios do
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
-  lane :beta_firim do
-    setup_circle_ci
+  lane :beta_firim do |options|
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     archive
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
@@ -82,8 +86,10 @@ platform :ios do
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
-  lane :beta_pgyer do
-    setup_circle_ci
+  lane :beta_pgyer do |options|
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     archive
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
@@ -92,8 +98,10 @@ platform :ios do
 
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
-  lane :beta_testflight do
-    setup_circle_ci
+  lane :beta_testflight do |options|
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     match(type: "appstore", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
@@ -101,8 +109,10 @@ platform :ios do
   end
 
   desc "Deploy a new version to the App Store"
-  lane :release do
-    setup_circle_ci
+  lane :release do |options|
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     match(type: "appstore", clone_branch_directly: true)
     # snapshot

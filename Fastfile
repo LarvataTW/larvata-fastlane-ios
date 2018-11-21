@@ -69,7 +69,7 @@ platform :ios do
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     archive
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
-    upload_symbols_to_crashlytics()
+    upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
   end
 
   desc "Submit a new Beta Build to fir.im"
@@ -81,7 +81,9 @@ platform :ios do
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     archive
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
-    upload_symbols_to_crashlytics()
+    unless ENV['FABRIC_API_TOKEN'].nil?
+      upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
+    end
   end
 
   desc "Submit a new Beta Build to Pgyer"
@@ -93,7 +95,9 @@ platform :ios do
     increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
     archive
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
-    upload_symbols_to_crashlytics()
+    unless ENV['FABRIC_API_TOKEN'].nil?
+      upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
+    end
   end
 
   desc "Submit a new Beta Build to Apple TestFlight"

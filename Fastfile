@@ -110,6 +110,9 @@ platform :ios do
     match(type: "appstore", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
     pilot(skip_waiting_for_build_processing: true)
+    unless ENV['FABRIC_API_TOKEN'].nil?
+      upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
+    end
   end
 
   desc "Deploy a new version to the App Store"

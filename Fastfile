@@ -16,21 +16,20 @@ fastlane_version "2.62.0"
 default_platform :ios
 
 platform :ios do
-  before_all do
-    unless ENV['SLACK_URL'].nil? || ENV['SLACK_CHANNEL'].nil? || ENV['XCODE_SCHEME'].nil?
-      slack(
-        message: ENV['XCODE_SCHEME'] + " start fastlane.",
-        channel: ENV['SLACK_CHANNEL'],
-      )
-    end
-  end
-
+  
   desc "Runs all the tests"
   lane :test do
     scan
   end
   
-  private_lane :archive do
+  lane :archive_adhoc do
+    # 設定Keychain
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
+    # 將 Pipeline ID 設定到build number
+    increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+    # 同步憑證
     match(type: "adhoc", clone_branch_directly: true)
     
     project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
@@ -59,15 +58,19 @@ platform :ios do
       }
     )
   end
+  
+  lane :archive_appstore do
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
+    increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+    match(type: "appstore", clone_branch_directly: true)
+    gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
+  end
 
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"
   lane :beta_fabric do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    archive
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
   end
@@ -75,11 +78,6 @@ platform :ios do
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    archive
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
@@ -89,11 +87,6 @@ platform :ios do
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    archive
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
@@ -103,32 +96,10 @@ platform :ios do
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
   lane :beta_testflight do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore", clone_branch_directly: true)
-    gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
     pilot(skip_waiting_for_build_processing: true)
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
     end
-  end
-
-  desc "Deploy a new version to the App Store"
-  lane :release do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore", clone_branch_directly: true)
-    # snapshot
-    gym(scheme: ENV['XCODE_SCHEME'])# Build your app - more options available
-    deliver(force: true,
-            automatic_release: true,
-            overwrite_screenshots: true,
-            run_precheck_before_submit: false)
-    # frameit
   end
 
   desc "Generate devices.txt"
@@ -156,45 +127,6 @@ platform :ios do
       type: "adhoc",
       force: true,
       clone_branch_directly: true)
-  end
-
-  # You can define as many lanes as you want
-
-  after_all do |lane|
-    # This block is called, only if the executed lane was successful
-    unless ENV['SLACK_URL'].nil? || ENV['SLACK_CHANNEL'].nil? || ENV['XCODE_SCHEME'].nil?
-      slack(
-        message: ENV['XCODE_SCHEME'] + " successfully released!",
-        channel: ENV['SLACK_CHANNEL'],
-        success: true,
-        payload: {
-          "Build Date" => Time.new.to_s,
-          "Built by" => ENV['USER'],
-        },
-        default_payloads: [:git_branch, :git_author],
-        attachment_properties: {
-          fields: [{
-            title: "Build Version",
-            value: get_version_number(target: ENV['XCODE_SCHEME']),
-            short: true
-          },{
-            title: "Build Number",
-            value: get_build_number,
-            short: true
-          }]
-        }
-      )
-    end
-  end
-
-  error do |lane, exception|
-    unless ENV['SLACK_URL'].nil? || ENV['SLACK_CHANNEL'].nil?
-      slack(
-        message: exception.message,
-        channel: ENV['SLACK_CHANNEL'],
-        success: false
-      )
-    end
   end
 end
 

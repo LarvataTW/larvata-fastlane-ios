@@ -22,7 +22,7 @@ platform :ios do
     scan
   end
   
-  lane :archive_adhoc do
+  lane :archive_adhoc do |options|
     # 設定Keychain
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
@@ -59,7 +59,7 @@ platform :ios do
     )
   end
   
-  lane :archive_appstore do
+  lane :archive_appstore do |options|
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
@@ -70,14 +70,14 @@ platform :ios do
 
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"
-  lane :beta_fabric do |options|
+  lane :beta_fabric do
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
-  lane :beta_firim do |options|
+  lane :beta_firim do
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
@@ -86,7 +86,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
-  lane :beta_pgyer do |options|
+  lane :beta_pgyer do
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
@@ -95,7 +95,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
-  lane :beta_testflight do |options|
+  lane :beta_testflight do
     pilot(skip_waiting_for_build_processing: true)
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])

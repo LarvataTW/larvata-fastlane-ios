@@ -57,6 +57,7 @@ platform :ios do
         compileBitcode: false
       }
     )
+    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
   
   lane :archive_appstore do |options|

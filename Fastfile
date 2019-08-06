@@ -72,7 +72,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"
-  lane :beta_fabric do
+  lane :beta_fabric do |options|
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
@@ -84,7 +84,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
-  lane :beta_firim do
+  lane :beta_firim do |options|
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
@@ -98,7 +98,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
-  lane :beta_pgyer do
+  lane :beta_pgyer do |options|
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
@@ -112,7 +112,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
-  lane :beta_testflight do
+  lane :beta_testflight do |options|
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end

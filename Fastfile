@@ -67,40 +67,49 @@ platform :ios do
     increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
     match(type: "appstore", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
+    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"
   lane :beta_fabric do
+    match(type: "adhoc", clone_branch_directly: true)
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
+    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do
+    match(type: "adhoc", clone_branch_directly: true)
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
     end
+    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do
+    match(type: "adhoc", clone_branch_directly: true)
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
     end
+    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
   lane :beta_testflight do
+    match(type: "appstore", clone_branch_directly: true)
     pilot(skip_waiting_for_build_processing: true)
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
     end
+    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Generate devices.txt"

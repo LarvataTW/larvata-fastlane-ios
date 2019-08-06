@@ -73,6 +73,9 @@ platform :ios do
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"
   lane :beta_fabric do
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     match(type: "adhoc", clone_branch_directly: true)
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
@@ -82,6 +85,9 @@ platform :ios do
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     match(type: "adhoc", clone_branch_directly: true)
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     unless ENV['FABRIC_API_TOKEN'].nil?
@@ -93,6 +99,9 @@ platform :ios do
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     match(type: "adhoc", clone_branch_directly: true)
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     unless ENV['FABRIC_API_TOKEN'].nil?
@@ -104,6 +113,9 @@ platform :ios do
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
   lane :beta_testflight do
+    if !options[:skip_setup_circle_ci]
+      setup_circle_ci
+    end
     match(type: "appstore", clone_branch_directly: true)
     pilot(skip_waiting_for_build_processing: true)
     unless ENV['FABRIC_API_TOKEN'].nil?

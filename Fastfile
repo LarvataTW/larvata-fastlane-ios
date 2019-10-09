@@ -27,6 +27,7 @@ platform :ios do
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
+    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     # 將 Pipeline ID 設定到build number
     increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
     # 同步憑證
@@ -64,6 +65,7 @@ platform :ios do
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
+    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
     match(type: "appstore", clone_branch_directly: true)
     gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
@@ -76,6 +78,7 @@ platform :ios do
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
+    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     match(type: "adhoc", clone_branch_directly: true)
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
@@ -88,6 +91,7 @@ platform :ios do
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
+    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     match(type: "adhoc", clone_branch_directly: true)
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     unless ENV['FABRIC_API_TOKEN'].nil?
@@ -102,6 +106,7 @@ platform :ios do
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
+    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     match(type: "adhoc", clone_branch_directly: true)
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     unless ENV['FABRIC_API_TOKEN'].nil?
@@ -116,6 +121,7 @@ platform :ios do
     if !options[:skip_setup_circle_ci]
       setup_circle_ci
     end
+    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     match(type: "appstore", clone_branch_directly: true)
     pilot(skip_waiting_for_build_processing: true)
     unless ENV['FABRIC_API_TOKEN'].nil?

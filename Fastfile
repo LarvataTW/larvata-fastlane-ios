@@ -23,111 +23,98 @@ platform :ios do
   end
   
   lane :archive_adhoc do |options|
-    # 設定Keychain
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-    # 將 Pipeline ID 設定到build number
-    increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
-    # 同步憑證
-    match(type: "adhoc", clone_branch_directly: true)
-    
-    project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
-    # 將 AppStore 替換成 AdHoc
-    project.build_configurations.each do |config|
-      unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
-        specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
-        config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
+    begin
+      # 設定Keychain
+      if !options[:skip_setup_circle_ci]
+        setup_circle_ci
       end
-    end
-    project.targets.each do |target|
-      target.build_configurations.each do |config|
+      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
+      # 將 Pipeline ID 設定到build number
+      increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+      # 同步憑證
+      match(type: "adhoc", clone_branch_directly: true, readonly: true)
+
+      project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
+      # 將 AppStore 替換成 AdHoc
+      project.build_configurations.each do |config|
         unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
           specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
           config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
         end
       end
+      project.targets.each do |target|
+        target.build_configurations.each do |config|
+          unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
+            specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
+            config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
+          end
+        end
+      end
+      project.save
+
+      gym(scheme: ENV['XCODE_SCHEME'],
+        export_method: "ad-hoc",
+        skip_profile_detection: true,
+        export_options: {
+          compileBitcode: false
+        }
+      )
+    ensure
+      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
-    project.save
-    
-    gym(scheme: ENV['XCODE_SCHEME'],
-      export_method: "ad-hoc",
-      skip_profile_detection: true,
-      export_options: {
-        compileBitcode: false
-      }
-    )
-    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
   
   lane :archive_appstore do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
+    begin
+      if !options[:skip_setup_circle_ci]
+        setup_circle_ci
+      end
+      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
+      increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+      match(type: "appstore", clone_branch_directly: true, readonly: true)
+      gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
+    ensure
+      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
-    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-    increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
-    match(type: "appstore", clone_branch_directly: true)
-    gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
-    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to Fabric"
   desc "This will also make sure the profile is up to date"
   lane :beta_fabric do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
     xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     match(type: "adhoc", clone_branch_directly: true)
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
     xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-    match(type: "adhoc", clone_branch_directly: true)
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
     end
-    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
     xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-    match(type: "adhoc", clone_branch_directly: true)
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
     end
-    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
   lane :beta_testflight do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
     xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-    match(type: "appstore", clone_branch_directly: true)
     pilot(skip_waiting_for_build_processing: true)
     unless ENV['FABRIC_API_TOKEN'].nil?
       upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
     end
-    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
   end
 
   desc "Generate devices.txt"

@@ -82,7 +82,6 @@ platform :ios do
   desc "This will also make sure the profile is up to date"
   lane :beta_fabric do |options|
     xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-    match(type: "adhoc", clone_branch_directly: true)
     crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
     upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
   end

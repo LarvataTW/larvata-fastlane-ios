@@ -93,6 +93,24 @@ platform :ios do
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
   end
+  
+  desc "Submit a new Beta Build to Firebase"
+  desc "This will also make sure the profile is up to date"
+  lane :beta_firebase do |options|
+    begin
+      if !options[:skip_setup_circle_ci]
+        setup_circle_ci
+      end
+      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
+      match(type: "adhoc", clone_branch_directly: true, readonly: true)
+      firebase_app_distribution(
+        app: ENV['FIREBASE_APP'],
+        firebase_cli_token: ENV['FIREBASE_CLI_TOKEN']
+      )
+    ensure
+      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+    end
+  end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"

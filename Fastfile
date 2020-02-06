@@ -77,22 +77,6 @@ platform :ios do
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
   end
-
-  desc "Submit a new Beta Build to Fabric"
-  desc "This will also make sure the profile is up to date"
-  lane :beta_fabric do |options|
-    begin
-      if !options[:skip_setup_circle_ci]
-        setup_circle_ci
-      end
-      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-      match(type: "adhoc", clone_branch_directly: true, readonly: true)
-      crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
-      upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-    ensure
-      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
-    end
-  end
   
   desc "Submit a new Beta Build to Firebase"
   desc "This will also make sure the profile is up to date"
@@ -122,9 +106,6 @@ platform :ios do
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       match(type: "adhoc", clone_branch_directly: true, readonly: true)
       firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
-      unless ENV['FABRIC_API_TOKEN'].nil?
-        upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-      end
     ensure
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
@@ -140,9 +121,6 @@ platform :ios do
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       match(type: "adhoc", clone_branch_directly: true, readonly: true)
       pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
-      unless ENV['FABRIC_API_TOKEN'].nil?
-        upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-      end
     ensure
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
@@ -158,9 +136,6 @@ platform :ios do
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       match(type: "appstore", clone_branch_directly: true, readonly: true)
       pilot(skip_waiting_for_build_processing: true)
-      unless ENV['FABRIC_API_TOKEN'].nil?
-        upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-      end
     ensure
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end

@@ -91,6 +91,9 @@ platform :ios do
         app: ENV['FIREBASE_APP'],
         firebase_cli_token: ENV['FIREBASE_CLI_TOKEN']
       )
+      unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+        upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
+      end
     ensure
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
@@ -106,6 +109,9 @@ platform :ios do
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       match(type: "adhoc", clone_branch_directly: true, readonly: true)
       firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
+      unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+        upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
+      end
     ensure
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
@@ -121,6 +127,9 @@ platform :ios do
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       match(type: "adhoc", clone_branch_directly: true, readonly: true)
       pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
+      unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+        upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
+      end
     ensure
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end

@@ -81,57 +81,30 @@ platform :ios do
   desc "Submit a new Beta Build to Firebase"
   desc "This will also make sure the profile is up to date"
   lane :beta_firebase do |options|
-    begin
-      if !options[:skip_setup_circle_ci]
-        setup_circle_ci
-      end
-      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-      match(type: "adhoc", clone_branch_directly: true, readonly: true)
-      firebase_app_distribution(
-        app: ENV['FIREBASE_APP'],
-        firebase_cli_token: ENV['FIREBASE_CLI_TOKEN']
-      )
-      unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-        upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
-      end
-    ensure
-      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+    firebase_app_distribution(
+      app: ENV['FIREBASE_APP'],
+      firebase_cli_token: ENV['FIREBASE_CLI_TOKEN']
+    )
+    unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+      upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
     end
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do |options|
-    begin
-      if !options[:skip_setup_circle_ci]
-        setup_circle_ci
-      end
-      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-      match(type: "adhoc", clone_branch_directly: true, readonly: true)
-      firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
-      unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-        upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
-      end
-    ensure
-      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+    firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
+    unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+      upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
     end
   end
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do |options|
-    begin
-      if !options[:skip_setup_circle_ci]
-        setup_circle_ci
-      end
-      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-      match(type: "adhoc", clone_branch_directly: true, readonly: true)
-      pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
-      unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-        upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
-      end
-    ensure
-      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+    pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
+    unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+      upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
     end
   end
 

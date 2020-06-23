@@ -137,6 +137,14 @@ platform :ios do
     refresh_profiles
     sh('rm -f ../devices.txt')
   end
+  
+  lane :register_a_device_without_apple_certs do
+    register_devices(
+      devices_file: "./devices.txt"
+    )
+    refresh_profiles_without_apple_certs
+    sh('rm -f ../devices.txt')
+  end
 
   # A helper lane for refreshing provisioning profiles.
   lane :refresh_profiles do
@@ -148,6 +156,18 @@ platform :ios do
       type: "adhoc",
       force: true,
       clone_branch_directly: true)
+  end
+  
+  # A helper lane for refreshing provisioning profiles.
+  lane :refresh_profiles_without_apple_certs do
+    match(
+      type: "development",
+      force: true,
+      generate_apple_certs: false)
+    match(
+      type: "adhoc",
+      force: true,
+      generate_apple_certs: false)
   end
 end
 

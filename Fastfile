@@ -60,6 +60,10 @@ platform :ios do
         }
       )
     ensure
+      unless Helper.ci?
+        UI.message("Not running on CI, skipping delete_keychain")
+        return
+      end
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
   end
@@ -74,6 +78,10 @@ platform :ios do
       match(type: "appstore", clone_branch_directly: true, readonly: true)
       gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
     ensure
+      unless Helper.ci?
+        UI.message("Not running on CI, skipping delete_keychain")
+        return
+      end
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
   end
@@ -119,6 +127,10 @@ platform :ios do
       match(type: "appstore", clone_branch_directly: true, readonly: true)
       pilot(skip_waiting_for_build_processing: true)
     ensure
+      unless Helper.ci?
+        UI.message("Not running on CI, skipping delete_keychain")
+        return
+      end
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
   end

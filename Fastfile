@@ -62,7 +62,7 @@ platform :ios do
     ensure
       unless Helper.ci?
         UI.message("Not running on CI, skipping delete_keychain")
-        return
+        next
       end
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
@@ -80,7 +80,7 @@ platform :ios do
     ensure
       unless Helper.ci?
         UI.message("Not running on CI, skipping delete_keychain")
-        return
+        next
       end
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
@@ -129,7 +129,7 @@ platform :ios do
     ensure
       unless Helper.ci?
         UI.message("Not running on CI, skipping delete_keychain")
-        return
+        next
       end
       delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end

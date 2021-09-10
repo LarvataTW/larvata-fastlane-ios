@@ -124,7 +124,6 @@ platform :ios do
         setup_circle_ci
       end
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-      match(type: "appstore", clone_branch_directly: true, readonly: true)
       pilot(skip_waiting_for_build_processing: true)
     ensure
       unless Helper.ci?

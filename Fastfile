@@ -91,7 +91,8 @@ platform :ios do
   lane :beta_firebase do |options|
     firebase_app_distribution(
       app: ENV['FIREBASE_APP'],
-      firebase_cli_token: ENV['FIREBASE_CLI_TOKEN']
+      firebase_cli_token: ENV['FIREBASE_CLI_TOKEN'],
+      groups: ENV['FIREBASE_GROUPS']
     )
     unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
       upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])

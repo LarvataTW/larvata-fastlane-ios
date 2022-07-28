@@ -89,11 +89,20 @@ platform :ios do
   desc "Submit a new Beta Build to Firebase"
   desc "This will also make sure the profile is up to date"
   lane :beta_firebase do |options|
-    firebase_app_distribution(
-      app: ENV['FIREBASE_APP'],
-      firebase_cli_token: ENV['FIREBASE_CLI_TOKEN'],
-      groups: ENV['FIREBASE_GROUPS']
-    )
+    if ENV['CI_COMMIT_BEFORE_SHA'] == '0000000000000000000000000000000000000000'
+      firebase_app_distribution(
+        app: ENV['FIREBASE_APP'],
+        firebase_cli_token: ENV['FIREBASE_CLI_TOKEN'],
+        groups: ENV['FIREBASE_GROUPS']
+      )
+    else
+      firebase_app_distribution(
+        app: ENV['FIREBASE_APP'],
+        firebase_cli_token: ENV['FIREBASE_CLI_TOKEN'],
+        groups: ENV['FIREBASE_GROUPS'],
+        release_notes: sh("git log --format='%h %s%n%b' #{ENV['CI_COMMIT_BEFORE_SHA']}...@")
+      )
+    end
     unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
       upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
     end

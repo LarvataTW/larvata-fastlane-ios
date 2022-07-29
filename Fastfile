@@ -100,7 +100,7 @@ platform :ios do
         app: ENV['FIREBASE_APP'],
         firebase_cli_token: ENV['FIREBASE_CLI_TOKEN'],
         groups: ENV['FIREBASE_GROUPS'],
-        release_notes: sh("git log --format='%h %s%n%b' #{ENV['CI_COMMIT_BEFORE_SHA']}...@")
+        release_notes: sh("git log --format='%h %s%n%b' --no-merges #{ENV['CI_COMMIT_BEFORE_SHA']}...@")
       )
     end
     unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?

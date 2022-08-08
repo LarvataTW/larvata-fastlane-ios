@@ -74,7 +74,11 @@ platform :ios do
         setup_circle_ci
       end
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-      increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+      if ENV['CI_COMMIT_TAG'].include? "-"
+        increment_build_number(build_number: ENV['CI_COMMIT_TAG'].rpartition('-').last)
+      else
+        increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+      end
       match(type: "appstore", clone_branch_directly: true, readonly: true)
       gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
     ensure

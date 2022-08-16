@@ -108,7 +108,10 @@ platform :ios do
       )
     end
     unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-      upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}*.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
     end
   end
 
@@ -117,7 +120,10 @@ platform :ios do
   lane :beta_firim do |options|
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
     unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-      upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}*.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
     end
   end
 
@@ -126,7 +132,10 @@ platform :ios do
   lane :beta_pgyer do |options|
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
     unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-      upload_symbols_to_crashlytics(gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"])
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}*.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"],
+      )
     end
   end
 

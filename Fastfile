@@ -13,6 +13,22 @@
 # Update this, if you use features of a newer version
 fastlane_version "2.62.0"
 
+def upload_crashlytics_symbols
+  unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+    if ENV['CI_COMMIT_BRANCH'] == "master"
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-staging.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    else
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-#{ENV['CI_COMMIT_REF_SLUG']}.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    end
+  end
+end
+
 default_platform :ios
 
 platform :ios do
@@ -107,36 +123,21 @@ platform :ios do
         release_notes: sh("git log --format='%h %s%n%b' --no-merges #{ENV['CI_COMMIT_BEFORE_SHA']}...@")
       )
     end
-    unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-      upload_symbols_to_crashlytics(
-        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}*.app.dSYM.zip",
-        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
-      )
-    end
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do |options|
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
-    unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-      upload_symbols_to_crashlytics(
-        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}*.app.dSYM.zip",
-        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
-      )
-    end
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do |options|
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
-    unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-      upload_symbols_to_crashlytics(
-        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}*.app.dSYM.zip",
-        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"],
-      )
-    end
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Apple TestFlight"

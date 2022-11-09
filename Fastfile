@@ -15,7 +15,12 @@ fastlane_version "2.62.0"
 
 def upload_crashlytics_symbols
   unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-    if ENV['CI_COMMIT_BRANCH'] == "master"
+    if !(ENV['CI_COMMIT_TAG'] || '').empty?
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    elsif ENV['CI_COMMIT_BRANCH'] == "master"
       upload_symbols_to_crashlytics(
         dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-staging.app.dSYM.zip",
         gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
@@ -149,6 +154,7 @@ platform :ios do
       end
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       pilot(skip_waiting_for_build_processing: true)
+      upload_crashlytics_symbols
     ensure
       unless Helper.ci?
         UI.message("Not running on CI, skipping delete_keychain")

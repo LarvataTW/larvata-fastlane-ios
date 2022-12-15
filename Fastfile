@@ -13,122 +13,155 @@
 # Update this, if you use features of a newer version
 fastlane_version "2.62.0"
 
-default_platform :ios
-
-platform :ios do
-  before_all do
-    unless ENV['SLACK_URL'].nil? || ENV['SLACK_CHANNEL'].nil? || ENV['XCODE_SCHEME'].nil?
-      slack(
-        message: ENV['XCODE_SCHEME'] + " start fastlane.",
-        channel: ENV['SLACK_CHANNEL'],
+def upload_crashlytics_symbols
+  unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+    if !(ENV['CI_COMMIT_TAG'] || '').empty?
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    elsif ENV['CI_COMMIT_BRANCH'] == "master"
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-staging.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    else
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-#{ENV['CI_COMMIT_REF_SLUG']}.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
       )
     end
   end
+end
 
+default_platform :ios
+
+platform :ios do
+  
   desc "Runs all the tests"
   lane :test do
     scan
   end
   
-  private_lane :archive do
-    match(type: "adhoc", clone_branch_directly: true)
-    
-    project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
-    # 將 AppStore 替換成 AdHoc
-    project.build_configurations.each do |config|
-      unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
-        specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
-        config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
+  lane :archive_adhoc do |options|
+    begin
+      # 設定Keychain
+      if !options[:skip_setup_circle_ci]
+        setup_circle_ci
       end
-    end
-    project.targets.each do |target|
-      target.build_configurations.each do |config|
+      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
+      # 將 Pipeline ID 設定到build number
+      increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+      # 同步憑證
+      match(type: "adhoc", clone_branch_directly: true, readonly: true)
+
+      project = Xcodeproj::Project.open(Dir["../*.xcodeproj"].first)
+      # 將 AppStore 替換成 AdHoc
+      project.build_configurations.each do |config|
         unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
           specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
           config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
         end
       end
-    end
-    project.save
-    
-    gym(scheme: ENV['XCODE_SCHEME'],
-      export_method: "ad-hoc",
-      skip_profile_detection: true,
-      export_options: {
-        compileBitcode: false
-      }
-    )
-  end
+      project.targets.each do |target|
+        target.build_configurations.each do |config|
+          unless config.build_settings['PROVISIONING_PROFILE_SPECIFIER'].nil?
+            specifier = config.build_settings['PROVISIONING_PROFILE_SPECIFIER']
+            config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = specifier.sub 'AppStore', 'AdHoc'
+          end
+        end
+      end
+      project.save
 
-  desc "Submit a new Beta Build to Fabric"
-  desc "This will also make sure the profile is up to date"
-  lane :beta_fabric do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
+      gym(scheme: ENV['XCODE_SCHEME'],
+        export_method: "ad-hoc",
+        skip_profile_detection: true,
+        export_options: {
+          compileBitcode: false
+        }
+      )
+    ensure
+      unless Helper.ci?
+        UI.message("Not running on CI, skipping delete_keychain")
+        next
+      end
+      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    archive
-    crashlytics(api_token: ENV['FABRIC_API_TOKEN'], build_secret: ENV['FABRIC_BUILD_SECRET'])
-    upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
+  end
+  
+  lane :archive_appstore do |options|
+    begin
+      if !options[:skip_setup_circle_ci]
+        setup_circle_ci
+      end
+      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
+      if (ENV['CI_COMMIT_TAG'] || '').include? "+"
+        increment_build_number(build_number: ENV['CI_COMMIT_TAG'].rpartition('+').last)
+      else
+        increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
+      end
+      match(type: "appstore", clone_branch_directly: true, readonly: true)
+      gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
+    ensure
+      unless Helper.ci?
+        UI.message("Not running on CI, skipping delete_keychain")
+        next
+      end
+      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+    end
+  end
+  
+  desc "Submit a new Beta Build to Firebase"
+  desc "This will also make sure the profile is up to date"
+  lane :beta_firebase do |options|
+    if ENV['CI_COMMIT_BEFORE_SHA'] == '0000000000000000000000000000000000000000'
+      firebase_app_distribution(
+        app: ENV['FIREBASE_APP'],
+        firebase_cli_token: ENV['FIREBASE_CLI_TOKEN'],
+        groups: ENV['FIREBASE_GROUPS']
+      )
+    else
+      firebase_app_distribution(
+        app: ENV['FIREBASE_APP'],
+        firebase_cli_token: ENV['FIREBASE_CLI_TOKEN'],
+        groups: ENV['FIREBASE_GROUPS'],
+        release_notes: sh("git log --format='%h %s%n%b' --no-merges #{ENV['CI_COMMIT_BEFORE_SHA']}...@")
+      )
+    end
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    archive
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
-    unless ENV['FABRIC_API_TOKEN'].nil?
-      upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-    end
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    archive
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
-    unless ENV['FABRIC_API_TOKEN'].nil?
-      upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-    end
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
   lane :beta_testflight do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
+    begin
+      if !options[:skip_setup_circle_ci]
+        setup_circle_ci
+      end
+      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
+      pilot(skip_waiting_for_build_processing: true)
+      upload_crashlytics_symbols
+    ensure
+      unless Helper.ci?
+        UI.message("Not running on CI, skipping delete_keychain")
+        next
+      end
+      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
     end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore", clone_branch_directly: true)
-    gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
-    pilot(skip_waiting_for_build_processing: true)
-    unless ENV['FABRIC_API_TOKEN'].nil?
-      upload_symbols_to_crashlytics(api_token: ENV['FABRIC_API_TOKEN'])
-    end
-  end
-
-  desc "Deploy a new version to the App Store"
-  lane :release do |options|
-    if !options[:skip_setup_circle_ci]
-      setup_circle_ci
-    end
-    increment_build_number(build_number: ENV['CIRCLE_BUILD_NUM'])
-    match(type: "appstore", clone_branch_directly: true)
-    # snapshot
-    gym(scheme: ENV['XCODE_SCHEME'])# Build your app - more options available
-    deliver(force: true,
-            automatic_release: true,
-            overwrite_screenshots: true,
-            run_precheck_before_submit: false)
-    # frameit
   end
 
   desc "Generate devices.txt"
@@ -145,6 +178,14 @@ platform :ios do
     refresh_profiles
     sh('rm -f ../devices.txt')
   end
+  
+  lane :register_a_device_without_apple_certs do
+    register_devices(
+      devices_file: "./devices.txt"
+    )
+    refresh_profiles_without_apple_certs
+    sh('rm -f ../devices.txt')
+  end
 
   # A helper lane for refreshing provisioning profiles.
   lane :refresh_profiles do
@@ -157,44 +198,17 @@ platform :ios do
       force: true,
       clone_branch_directly: true)
   end
-
-  # You can define as many lanes as you want
-
-  after_all do |lane|
-    # This block is called, only if the executed lane was successful
-    unless ENV['SLACK_URL'].nil? || ENV['SLACK_CHANNEL'].nil? || ENV['XCODE_SCHEME'].nil?
-      slack(
-        message: ENV['XCODE_SCHEME'] + " successfully released!",
-        channel: ENV['SLACK_CHANNEL'],
-        success: true,
-        payload: {
-          "Build Date" => Time.new.to_s,
-          "Built by" => ENV['USER'],
-        },
-        default_payloads: [:git_branch, :git_author],
-        attachment_properties: {
-          fields: [{
-            title: "Build Version",
-            value: get_version_number(target: ENV['XCODE_SCHEME']),
-            short: true
-          },{
-            title: "Build Number",
-            value: get_build_number,
-            short: true
-          }]
-        }
-      )
-    end
-  end
-
-  error do |lane, exception|
-    unless ENV['SLACK_URL'].nil? || ENV['SLACK_CHANNEL'].nil?
-      slack(
-        message: exception.message,
-        channel: ENV['SLACK_CHANNEL'],
-        success: false
-      )
-    end
+  
+  # A helper lane for refreshing provisioning profiles.
+  lane :refresh_profiles_without_apple_certs do
+    match(
+      type: "development",
+      force: true,
+      generate_apple_certs: false)
+    match(
+      type: "adhoc",
+      force: true,
+      generate_apple_certs: false)
   end
 end
 

@@ -119,12 +119,8 @@ platform :ios do
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
   lane :beta_testflight do |options|
-    begin
-      xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
-      pilot(skip_waiting_for_build_processing: true)
-    ensure
-      unsetup_ci
-    end
+    xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
+    pilot(skip_waiting_for_build_processing: true)
   end
 
   desc "Generate devices.txt"

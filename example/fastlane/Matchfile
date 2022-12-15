@@ -1,0 +1,16 @@
+storage_mode "google_cloud"
+google_cloud_bucket_name ""
+
+type "development" # The default type, can be: appstore, adhoc, enterprise or development
+
+if ENV['CI_COMMIT_TAG'] != nil
+  app_identifier [""] # production app_identifier
+elsif ENV['CI_COMMIT_BRANCH'] == "master"
+  app_identifier [""] # staging app_identifier
+else
+  app_identifier [""] # develop app_identifier
+end
+# username "user@fastlane.tools" # Your Apple Developer Portal username
+
+# For all available options run `fastlane match --help`
+# Remove the # in the beginning of the line to enable the other options

@@ -1,0 +1,2 @@
+include:
+  - remote: 'https://raw.githubusercontent.com/LarvataTW/larvata-fastlane-ios/master/iOS-Fastlane.gitlab-ci.yml'

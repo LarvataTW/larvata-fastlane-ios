@@ -1,0 +1,144 @@
+stages:
+  - archive
+  - deploy
+
+variables:
+  LC_ALL: en_US.UTF-8
+  LANG: en_US.UTF-8
+  SPACESHIP_ONLY_ALLOW_INTERACTIVE_2FA: 'true'
+  # required
+  XCODE_SCHEME_NAME: ""
+  XCODE_PRODUCT_NAME: ""
+  MATCH_GC_KEYS: ""
+  # optional
+  XCODE_VERSION: ""
+  FASTLANE_ARCHIVE_METHOD: adhoc
+  FASTLANE_DEPLOY_METHOD: firebase
+  DEPLOY_DISABLED: "false"
+  # GOOGLE_SERVICE_PLIST_PATH: /path/to/GoogleService-Info.plist
+
+archive_adhoc_app:
+  stage: archive
+  tags:
+    - macOS
+  except:
+    - master
+    - tags
+  variables:
+    XCODE_SCHEME: "$XCODE_SCHEME_NAME $CI_COMMIT_REF_SLUG"
+  script:
+    - bundle install
+    - bundle exec pod install
+    - echo "${MATCH_GC_KEYS}" > gc_keys.json
+    - bundle exec fastlane ios archive_${FASTLANE_ARCHIVE_METHOD} --verbose
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    paths:
+      - ${XCODE_PRODUCT_NAME}-${CI_COMMIT_REF_SLUG}.ipa
+      - ${XCODE_PRODUCT_NAME}-${CI_COMMIT_REF_SLUG}.app.dSYM.zip
+
+archive_staging_app:
+  stage: archive
+  tags:
+    - macOS
+  only:
+    refs:
+      - master
+    variables:
+      - $STAGING_ENABLED
+  variables:
+    XCODE_SCHEME: "$XCODE_SCHEME_NAME staging"
+  script:
+    - bundle install
+    - bundle exec pod install
+    - echo "${MATCH_GC_KEYS}" > gc_keys.json
+    - bundle exec fastlane ios archive_${FASTLANE_ARCHIVE_METHOD} --verbose
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    paths:
+      - ${XCODE_PRODUCT_NAME}-staging.ipa
+      - ${XCODE_PRODUCT_NAME}-staging.app.dSYM.zip
+
+archive_appstore_app:
+  stage: archive
+  tags:
+    - macOS
+  only:
+    - tags
+  variables:
+    XCODE_SCHEME: $XCODE_SCHEME_NAME
+  script:
+    - bundle install
+    - bundle exec pod install
+    - echo "${MATCH_GC_KEYS}" > gc_keys.json
+    - bundle exec fastlane ios archive_appstore --verbose
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    paths:
+      - ${XCODE_PRODUCT_NAME}.ipa
+      - ${XCODE_PRODUCT_NAME}.app.dSYM.zip
+
+deploy_adhoc_app:
+  stage: deploy
+  tags:
+    - macOS
+  except:
+    refs:
+      - master
+      - tags
+    variables:
+      - $DEPLOY_DISABLED == "true"
+  script:
+    - bundle install
+    - bundle exec pod install
+    - bundle exec fastlane ios beta_${FASTLANE_DEPLOY_METHOD} --verbose
+    - >
+      if [[ -z "${GOOGLE_SERVICE_PLIST_PATH}" ]]; then
+        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}-${CI_COMMIT_REF_SLUG}.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
+      fi
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+
+deploy_staging_app:
+  stage: deploy
+  tags:
+    - macOS
+  only:
+    refs:
+      - master
+    variables:
+      - $STAGING_ENABLED
+  except:
+    variables:
+      - $DEPLOY_DISABLED == "true"
+  script:
+    - bundle install
+    - bundle exec pod install
+    - bundle exec fastlane ios beta_${FASTLANE_DEPLOY_METHOD} --verbose
+    - >
+      if [[ -z "${GOOGLE_SERVICE_PLIST_PATH}" ]]; then
+        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}-staging.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
+      fi
+  environment:
+    name: staging
+
+deploy_appstore_app:
+  stage: deploy
+  tags:
+    - macOS
+  only:
+    - tags
+  except:
+    variables:
+      - $DEPLOY_DISABLED == "true"
+  script:
+    - bundle install
+    - bundle exec pod install
+    - echo "${MATCH_GC_KEYS}" > gc_keys.json
+    - bundle exec fastlane ios beta_testflight --verbose
+    - >
+      if [[ -z "${GOOGLE_SERVICE_PLIST_PATH}" ]]; then
+        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
+      fi
+  environment:
+    name: production

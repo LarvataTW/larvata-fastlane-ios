@@ -11,44 +11,28 @@
 
 # This is the minimum version number required.
 # Update this, if you use features of a newer version
-fastlane_version "2.62.0"
-
-def upload_crashlytics_symbols
-  unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
-    if !(ENV['CI_COMMIT_TAG'] || '').empty?
-      upload_symbols_to_crashlytics(
-        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}.app.dSYM.zip",
-        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
-      )
-    elsif ENV['CI_COMMIT_BRANCH'] == "master"
-      upload_symbols_to_crashlytics(
-        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-staging.app.dSYM.zip",
-        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
-      )
-    else
-      upload_symbols_to_crashlytics(
-        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-#{ENV['CI_COMMIT_REF_SLUG']}.app.dSYM.zip",
-        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
-      )
-    end
-  end
-end
+fastlane_version "2.211.0"
 
 default_platform :ios
 
 platform :ios do
-  
+  private
+  def unsetup_ci
+    unless Helper.ci?
+      UI.message("Not running on CI, skipping delete_keychain")
+      return
+    end
+    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+  end
+
   desc "Runs all the tests"
   lane :test do
     scan
   end
-  
+
   lane :archive_adhoc do |options|
     begin
-      # 設定Keychain
-      if !options[:skip_setup_circle_ci]
-        setup_circle_ci
-      end
+      setup_ci
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       # 將 Pipeline ID 設定到build number
       increment_build_number(build_number: ENV['CI_PIPELINE_IID'])
@@ -81,19 +65,13 @@ platform :ios do
         }
       )
     ensure
-      unless Helper.ci?
-        UI.message("Not running on CI, skipping delete_keychain")
-        next
-      end
-      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+      unsetup_ci
     end
   end
-  
+
   lane :archive_appstore do |options|
     begin
-      if !options[:skip_setup_circle_ci]
-        setup_circle_ci
-      end
+      setup_ci
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       if (ENV['CI_COMMIT_TAG'] || '').include? "+"
         increment_build_number(build_number: ENV['CI_COMMIT_TAG'].rpartition('+').last)
@@ -103,14 +81,10 @@ platform :ios do
       match(type: "appstore", clone_branch_directly: true, readonly: true)
       gym(scheme: ENV['XCODE_SCHEME'], skip_profile_detection: true) # Build your app - more options available
     ensure
-      unless Helper.ci?
-        UI.message("Not running on CI, skipping delete_keychain")
-        next
-      end
-      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+      unsetup_ci
     end
   end
-  
+
   desc "Submit a new Beta Build to Firebase"
   desc "This will also make sure the profile is up to date"
   lane :beta_firebase do |options|
@@ -128,87 +102,36 @@ platform :ios do
         release_notes: sh("git log --format='%h %s%n%b' --no-merges #{ENV['CI_COMMIT_BEFORE_SHA']}...@")
       )
     end
-    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do |options|
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
-    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do |options|
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
-    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Apple TestFlight"
   desc "This will also make sure the profile is up to date"
   lane :beta_testflight do |options|
     begin
-      if !options[:skip_setup_circle_ci]
-        setup_circle_ci
-      end
       xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
       pilot(skip_waiting_for_build_processing: true)
-      upload_crashlytics_symbols
     ensure
-      unless Helper.ci?
-        UI.message("Not running on CI, skipping delete_keychain")
-        next
-      end
-      delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+      unsetup_ci
     end
   end
 
   desc "Generate devices.txt"
-  lane :add_device do
+  lane :generate_devices_list do
     sh('echo "Device ID	Device Name" >> ../devices.txt')
     sh('echo "A123456789012345678901234567890123456789	NAME1" >> ../devices.txt')
     sh('echo "B123456789012345678901234567890123456789	NAME2" >> ../devices.txt')
-  end
-
-  lane :register_a_device do
-    register_devices(
-      devices_file: "./devices.txt"
-    )
-    refresh_profiles
-    sh('rm -f ../devices.txt')
-  end
-  
-  lane :register_a_device_without_apple_certs do
-    register_devices(
-      devices_file: "./devices.txt"
-    )
-    refresh_profiles_without_apple_certs
-    sh('rm -f ../devices.txt')
-  end
-
-  # A helper lane for refreshing provisioning profiles.
-  lane :refresh_profiles do
-    match(
-      type: "development",
-      force: true,
-      clone_branch_directly: true)
-    match(
-      type: "adhoc",
-      force: true,
-      clone_branch_directly: true)
-  end
-  
-  # A helper lane for refreshing provisioning profiles.
-  lane :refresh_profiles_without_apple_certs do
-    match(
-      type: "development",
-      force: true,
-      generate_apple_certs: false)
-    match(
-      type: "adhoc",
-      force: true,
-      generate_apple_certs: false)
   end
 end
 
@@ -216,5 +139,5 @@ end
 # More information about multiple platforms in fastlane: https://github.com/fastlane/fastlane/blob/master/fastlane/docs/Platforms.md
 # All available actions: https://docs.fastlane.tools/actions
 
-# fastlane reports which actions are used. No personal data is recorded. 
+# fastlane reports which actions are used. No personal data is recorded.
 # Learn more at https://github.com/fastlane/fastlane#metrics

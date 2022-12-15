@@ -9,6 +9,15 @@
 # If you want to automatically update fastlane if a new version is available:
 # update_fastlane
 
+private
+def unsetup_ci
+  unless Helper.ci?
+    UI.message("Not running on CI, skipping delete_keychain")
+    return
+  end
+  delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
+end
+
 # This is the minimum version number required.
 # Update this, if you use features of a newer version
 fastlane_version "2.211.0"
@@ -16,14 +25,6 @@ fastlane_version "2.211.0"
 default_platform :ios
 
 platform :ios do
-  private
-  def unsetup_ci
-    unless Helper.ci?
-      UI.message("Not running on CI, skipping delete_keychain")
-      return
-    end
-    delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
-  end
 
   desc "Runs all the tests"
   lane :test do

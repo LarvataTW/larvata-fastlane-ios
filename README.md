@@ -26,12 +26,12 @@ Environment Variables:
 | XCODE_SCHEME_NAME | your xcode scheme name | "" | false |
 | XCODE_PROJECT_NAME | your product name | "" | false |
 | MATCH_GC_KEYS | gc_keys.json get from GCP IAM | "" | false |
-| FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD | | | false |
-| PILOT_APPLE_ID | | | false |
-| XCODE_VERSION | which xcode version you use | "" | true |
+| FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD | | null | false |
+| PILOT_APPLE_ID | | null | false |
+| XCODE_VERSION | which xcode version you use | null | true |
 | FASTLANE_ARCHIVE_METHOD | ["adhoc", "testflight"] | "adhoc" | true |
 | FASTLANE_DEPLOY_METHOD | ["firebase", "firim", "pgyer", "testflight"] | "firebase" | true |
-| GOOGLE_SERVICE_PLIST_PATH | Set if you want send dSYM to firebase | | true |
+| GOOGLE_SERVICE_PLIST_PATH | Set if you want send dSYM to firebase | null | true |
 | DEPLOY_DISABLED | | "false" | true |
 | STAGING_ENABLED | | "true" | true |
 

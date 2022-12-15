@@ -11,11 +11,11 @@ variables:
   XCODE_PRODUCT_NAME: ""
   MATCH_GC_KEYS: ""
   # optional
-  XCODE_VERSION: ""
   FASTLANE_ARCHIVE_METHOD: adhoc
   FASTLANE_DEPLOY_METHOD: firebase
   DEPLOY_DISABLED: "false"
   # GOOGLE_SERVICE_PLIST_PATH: /path/to/GoogleService-Info.plist
+  # XCODE_VERSION: 14.1
 
 archive_adhoc_app:
   stage: archive

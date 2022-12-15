@@ -36,6 +36,8 @@ archive_adhoc_app:
     paths:
       - ${XCODE_PRODUCT_NAME}-${CI_COMMIT_REF_SLUG}.ipa
       - ${XCODE_PRODUCT_NAME}-${CI_COMMIT_REF_SLUG}.app.dSYM.zip
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
 
 archive_staging_app:
   stage: archive
@@ -58,6 +60,8 @@ archive_staging_app:
     paths:
       - ${XCODE_PRODUCT_NAME}-staging.ipa
       - ${XCODE_PRODUCT_NAME}-staging.app.dSYM.zip
+  environment:
+    name: staging
 
 archive_appstore_app:
   stage: archive

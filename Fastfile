@@ -9,7 +9,6 @@
 # If you want to automatically update fastlane if a new version is available:
 # update_fastlane
 
-private
 def unsetup_ci
   unless Helper.ci?
     UI.message("Not running on CI, skipping delete_keychain")

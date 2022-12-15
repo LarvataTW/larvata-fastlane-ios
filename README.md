@@ -29,7 +29,7 @@ Environment Variables:
 | FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD | | null | false |
 | PILOT_APPLE_ID | | null | false |
 | XCODE_VERSION | which xcode version you use | null | true |
-| FASTLANE_ARCHIVE_METHOD | ["adhoc", "testflight"] | "adhoc" | true |
+| FASTLANE_ARCHIVE_METHOD | ["adhoc", "appstore"] | "adhoc" | true |
 | FASTLANE_DEPLOY_METHOD | ["firebase", "firim", "pgyer", "testflight"] | "firebase" | true |
 | GOOGLE_SERVICE_PLIST_PATH | Set if you want send dSYM to firebase | null | true |
 | DEPLOY_DISABLED | | "false" | true |

@@ -102,7 +102,7 @@ deploy_adhoc_app:
       elif [[ -z "$GOOGLE_SERVICE_PLIST_PATH" ]]; then
         echo "GOOGLE_SERVICE_PLIST_PATH is set to the empty string"
       else
-        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
+        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}-${CI_COMMIT_REF_SLUG}.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
       fi
   environment:
     name: review/$CI_COMMIT_REF_NAME
@@ -129,7 +129,7 @@ deploy_staging_app:
       elif [[ -z "$GOOGLE_SERVICE_PLIST_PATH" ]]; then
         echo "GOOGLE_SERVICE_PLIST_PATH is set to the empty string"
       else
-        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
+        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}-staging.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
       fi
   environment:
     name: staging

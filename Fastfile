@@ -17,6 +17,27 @@ def unsetup_ci
   delete_keychain(name: ENV['MATCH_KEYCHAIN_NAME'])
 end
 
+def upload_crashlytics_symbols
+  unless ENV['GOOGLE_SERVICE_PLIST_PATH'].nil?
+    if !(ENV['CI_COMMIT_TAG'] || '').empty?
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    elsif ENV['CI_COMMIT_BRANCH'] == "master"
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-staging.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    else
+      upload_symbols_to_crashlytics(
+        dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-#{ENV['CI_COMMIT_REF_SLUG']}.app.dSYM.zip",
+        gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
+      )
+    end
+  end
+end
+
 # This is the minimum version number required.
 # Update this, if you use features of a newer version
 fastlane_version "2.211.0"
@@ -102,18 +123,21 @@ platform :ios do
         release_notes: sh("git log --format='%h %s%n%b' --no-merges #{ENV['CI_COMMIT_BEFORE_SHA']}...@")
       )
     end
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to fir.im"
   desc "This will also make sure the profile is up to date"
   lane :beta_firim do |options|
     firim(firim_api_token: ENV['FIRIM_API_TOKEN'])
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Pgyer"
   desc "This will also make sure the profile is up to date"
   lane :beta_pgyer do |options|
     pgyer(api_key: ENV['PGYER_API_KEY'], user_key: ENV['PGYER_USER_KEY'])
+    upload_crashlytics_symbols
   end
 
   desc "Submit a new Beta Build to Apple TestFlight"
@@ -121,6 +145,7 @@ platform :ios do
   lane :beta_testflight do |options|
     xcode_select("/Applications/Xcode#{ENV['XCODE_VERSION'].nil? ? "" : "-" + ENV['XCODE_VERSION']}.app")
     pilot(skip_waiting_for_build_processing: true)
+    upload_crashlytics_symbols
   end
 
   desc "Generate devices.txt"
@@ -128,6 +153,46 @@ platform :ios do
     sh('echo "Device ID	Device Name" >> ../devices.txt')
     sh('echo "A123456789012345678901234567890123456789	NAME1" >> ../devices.txt')
     sh('echo "B123456789012345678901234567890123456789	NAME2" >> ../devices.txt')
+  end
+
+  lane :register_a_device do
+    register_devices(
+      devices_file: "./devices.txt"
+    )
+    refresh_profiles
+    sh('rm -f ../devices.txt')
+  end
+
+  lane :register_a_device_without_apple_certs do
+    register_devices(
+      devices_file: "./devices.txt"
+    )
+    refresh_profiles_without_apple_certs
+    sh('rm -f ../devices.txt')
+  end
+
+  # A helper lane for refreshing provisioning profiles.
+  lane :refresh_profiles do
+    match(
+      type: "development",
+      force: true,
+      clone_branch_directly: true)
+    match(
+      type: "adhoc",
+      force: true,
+      clone_branch_directly: true)
+  end
+
+  # A helper lane for refreshing provisioning profiles.
+  lane :refresh_profiles_without_apple_certs do
+    match(
+      type: "development",
+      force: true,
+      generate_apple_certs: false)
+    match(
+      type: "adhoc",
+      force: true,
+      generate_apple_certs: false)
   end
 end
 

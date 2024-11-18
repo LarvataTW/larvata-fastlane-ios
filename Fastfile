@@ -24,7 +24,7 @@ def upload_crashlytics_symbols
         dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}.app.dSYM.zip",
         gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]
       )
-    elsif ENV['CI_COMMIT_BRANCH'] == "master"
+    elsif ENV['CI_COMMIT_BRANCH'] == "master" || ENV['CI_COMMIT_BRANCH'] == "main"
       upload_symbols_to_crashlytics(
         dsym_path: "#{ENV['XCODE_PRODUCT_NAME']}-staging.app.dSYM.zip",
         gsp_path: ENV["GOOGLE_SERVICE_PLIST_PATH"]

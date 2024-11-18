@@ -13,7 +13,7 @@ variables:
   # optional
   FASTLANE_ARCHIVE_METHOD: adhoc
   FASTLANE_DEPLOY_METHOD: firebase
-  DEPLOY_DISABLED: "false"
+  DEPLOY_DISABLED: 'false'
   # GOOGLE_SERVICE_PLIST_PATH: /path/to/GoogleService-Info.plist
   # XCODE_VERSION: 14.1
 
@@ -40,6 +40,7 @@ archive_adhoc_app:
       when: never
     - if: 'CI_COMMIT_TAG'
       when: never
+    - if: '$CI_COMMIT_BRANCH'
 
 archive_staging_app:
   stage: archive
@@ -81,7 +82,7 @@ archive_appstore_app:
       - ${XCODE_PRODUCT_NAME}.ipa
       - ${XCODE_PRODUCT_NAME}.app.dSYM.zip
   rules:
-    - if: 'CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_TAG'
 
 deploy_adhoc_app:
   stage: deploy
@@ -106,6 +107,7 @@ deploy_adhoc_app:
       when: never
     - if: 'CI_COMMIT_TAG'
       when: never
+    - if: '$CI_COMMIT_BRANCH'
 
 deploy_staging_app:
   stage: deploy
@@ -150,4 +152,4 @@ deploy_appstore_app:
   rules:
     - if: '$DEPLOY_DISABLED == "true"'
       when: never
-    - if: 'CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_TAG'

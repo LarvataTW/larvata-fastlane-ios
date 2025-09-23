@@ -92,12 +92,6 @@ deploy_adhoc_app:
     - bundle install
     - bundle exec pod install
     - bundle exec fastlane ios beta_${FASTLANE_DEPLOY_METHOD} --verbose
-    - >
-      if [[ -z "${GOOGLE_SERVICE_PLIST_PATH}" ]]; then
-        echo "GOOGLE_SERVICE_PLIST_PATH is not set"
-      else
-        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}-${CI_COMMIT_REF_SLUG}.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
-      fi
   environment:
     name: review/$CI_COMMIT_REF_NAME
   rules:
@@ -117,12 +111,6 @@ deploy_staging_app:
     - bundle install
     - bundle exec pod install
     - bundle exec fastlane ios beta_${FASTLANE_DEPLOY_METHOD} --verbose
-    - >
-      if [[ -z "${GOOGLE_SERVICE_PLIST_PATH}" ]]; then
-        echo "GOOGLE_SERVICE_PLIST_PATH is not set"
-      else
-        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}-staging.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
-      fi
   environment:
     name: staging
   rules:
@@ -141,12 +129,6 @@ deploy_appstore_app:
     - bundle exec pod install
     - echo "${MATCH_GC_KEYS}" > gc_keys.json
     - bundle exec fastlane ios beta_testflight --verbose
-    - >
-      if [[ -z "${GOOGLE_SERVICE_PLIST_PATH}" ]]; then
-        echo "GOOGLE_SERVICE_PLIST_PATH is not set"
-      else
-        bundle exec fastlane run upload_symbols_to_crashlytics dsym_path:"${XCODE_PRODUCT_NAME}.app.dSYM.zip" gsp_path:"${GOOGLE_SERVICE_PLIST_PATH}"
-      fi
   environment:
     name: production
   rules:
